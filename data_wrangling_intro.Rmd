@@ -1,0 +1,194 @@
+---
+title: "Data Wrangling Intro"
+author: "Desik Somasundaram"
+date: "8/16/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(palmerpenguins)
+```
+
+## Warm-up:
+
+Look at 'us_rent_income'. Make a tidy version. Get back to the original structure.
+
+```{r}
+```
+
+
+```{r}
+us_rent_income_long <- us_rent_income %>% 
+  select(-moe) %>% 
+  pivot_wider(names_from = variable, values_from = estimate)
+
+```
+
+```{r}
+us_rent_income_long_original <- us_rent_income_long %>%
+  pivot_longer(cols = income:rent, names_to = "variable", values_to = "estimate" )
+  
+```
+
+Only keep observations where the island is Biscoe
+
+```{r}
+ex_1 <- filter(.data = penguins, island == "Biscoe")
+unique(ex_1$island)
+
+```
+Only keep observations if the penguin species is Chinstrap AND the year is 2008
+
+```{r}
+ex_2 <- penguins %>% 
+  filter(species == "Chinstrap", year == 2008)
+```
+
+Keep observations if the penguins species is NOT "Gentoo"
+```{r}
+ex_3 <- penguins %>% 
+  filter(species != "Gentoo")
+```
+
+Create a subset from 'penguins' that only contains observations for Adelie penguins with a flipper length greater than of equal to 185 mm
+
+```{r}
+ex_4 <- penguins %>% 
+  filter(species == "Adelie", flipper_length_mm >= 185)
+
+```
+
+Use the %in% operator to look for *any* matches within a vector,  and return TRUE if the value does exist for our row.
+
+We want to keep observations where the island is Dream or Torgersen.
+
+```{r}
+ex_5 <- penguins %>% 
+  filter(island %in% c("Dream", "Torgersen"))
+
+
+```
+
+Select() to select or exclude COLUMNS
+
+5. Keep a single column by name
+
+Only want to keep the species column
+
+```{r}
+ex_6 <- penguins %>%  select(species) 
+
+ex_7 <- select(.data = penguins, species)
+```
+
+Keep multiple columns by name
+
+Create a subset that contains species, bill_length_mm through flipper_length_mm, and year
+
+```{r}
+ex_8 <- penguins %>% 
+  select(species, bill_length_mm:flipper_length_mm, year)
+```
+
+```{r}
+ex_9 <- penguins %>% 
+  select(-4)
+```
+
+Piped sequence where you first only keep columns for species, body_mass_g, and island, and second: filter to only include observations if body_mass_g is greater than 3600
+
+```{r}
+ex_10 <- penguins %>% 
+  select(species, body_mass_g, island) %>% 
+  filter(body_mass_g > 3600)
+
+```
+
+Mutate() to add or update existing columns, while keeping the ones already there
+
+Add a column that converts body mass from g to kg
+
+```{r}
+ex_11 <- penguins %>% 
+  mutate(body_mass_kg = body_mass_g / 1000) %>% 
+  mutate(flipper_length_m = flipper_length_mm / 1000)
+
+```
+
+Mutate to update an existing column
+
+```{r}
+ex_12 <- penguins %>% 
+  mutate(island = str_replace(island, pattern = "sen", replacement = "HOORAY!"))
+
+```
+
+Update the class of the bill depth column to character
+
+```{r}
+ex_13 <- penguins %>% 
+  mutate(bill_depth_mm = as.character(bill_depth_mm)) 
+
+```
+
+case_when(): your favorite if-else
+
+Create a new column that contains "small" if penguin flipper length is less than 185 mm, 
+"medium" otherwise
+```{r}
+ex_14 <- penguins %>% 
+  mutate(binned_size = case_when(
+    flipper_length_mm < 185 ~ "small", flipper_length_mm >= 185 ~ "medium"
+  ))
+
+```
+
+new column "bird_bill_bin" that contains:
+
+-If bill length < 38 mm: "short bill"
+-If bill length >= 38mm & < 43 mm: "medium bill"
+-If bill length >= 43: "long bill"
+
+```{r}
+ex_15 <- penguins %>% 
+  mutate(bird_bill_bin = case_when(
+    bill_length_mm < 38 ~ "short bill", 
+    bill_length_mm >= 38 & bill_length_mm < 43 ~ "medium bill", 
+    bill_length_mm > 43 ~ "long bill"
+  ))
+
+```
+
+group-by() %>% summarize() to find summary values by group, and return them in a nice summary table
+
+```{r}
+mean(penguins$bill_depth_mm, na.rm = TRUE)
+```
+
+```{r}
+ex_16 <- penguins %>% 
+  group_by(species, island) %>% 
+  summarize(mean_flipper_length = mean(flipper_length_mm, na.rm = TRUE), sd_flipper_length = sd(flipper_length_mm, na.rm = TRUE))
+
+ex_16
+
+```
+
+In piped sequence:
+
+-Only keep penguins that have a body mass > 3500 g
+-Only keep columns for species, flipper_length_mm, and sex
+-Create a summary table that contains the mean, sd, max, min value of flipper
+length by species and sex (as the grouping variables)
+
+```{r}
+prac <- penguins %>% 
+  filter(body_mass_g > 3500) %>% 
+  select(species, flipper_length_mm, sex) %>% 
+  group_by(species, sex) %>% 
+  summarize(mean_flipper_length = mean(flipper_length_mm, na.rm = TRUE), sd_flipper_length = sd(flipper_length_mm, na.rm = TRUE), max_flipper_length = max(flipper_length_mm, na.rm = TRUE), min_flipper_length = min(flipper_length_mm, na.rm = TRUE) )
+
+```
+
